@@ -1,0 +1,262 @@
+// App.jsx — Single-file React starter for Futurisocial (React + Tailwind)
+// Drop this into src/App.jsx of a Create React App or Vite React project.
+// Requires: react-router-dom, framer-motion, zustand (optional). Tailwind must be set up in the project.
+
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// ---------- Dummy data
+const initialPosts = [
+  { id: 1, user: 'Ava', text: 'Welcome to Futurisocial! ✨', likes: 12, comments: 3 },
+  { id: 2, user: 'Kai', text: 'Made a cool interface today. Dark mode gang! 🌚', likes: 7, comments: 1 },
+]
+
+// ---------- Helpers
+function useLocalTheme() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  useEffect(() => {
+    localStorage.setItem('theme', theme)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+  return [theme, setTheme]
+}
+
+// ---------- Components
+function Navbar({ theme, setTheme }) {
+  return (
+    <header className="w-full bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 dark:from-black dark:via-gray-900 dark:to-gray-800 text-white p-3">
+      <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold">FS</div>
+          <div className="hidden sm:block font-semibold tracking-wide">Futurisocial</div>
+        </Link>
+        <nav className="flex items-center gap-3">
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/messages">Messages</NavLink>
+          <NavLink to="/notifications">Notifications</NavLink>
+          <NavLink to="/profile">Profile</NavLink>
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="ml-2 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
+          >
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+function NavLink({ to, children }) {
+  return (
+    <Link to={to} className="px-2 py-1 hover:bg-white/10 rounded-md hidden sm:inline-block">
+      {children}
+    </Link>
+  )
+}
+
+function Home() {
+  const [posts, setPosts] = useState(initialPosts)
+  const [text, setText] = useState('')
+
+  function addPost(e) {
+    e.preventDefault()
+    if (!text.trim()) return
+    const p = { id: Date.now(), user: 'You', text, likes: 0, comments: 0 }
+    setPosts([p, ...posts])
+    setText('')
+  }
+
+  function toggleLike(id) {
+    setPosts(posts.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p))
+  }
+
+  return (
+    <main className="max-w-5xl mx-auto p-4">
+      <section className="mb-6">
+        <form onSubmit={addPost} className="bg-white/5 p-4 rounded-lg">
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Share something futuristic..."
+            className="w-full min-h-[80px] bg-transparent resize-none outline-none"
+          />
+          <div className="flex justify-end">
+            <button className="mt-2 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-semibold">Post</button>
+          </div>
+        </form>
+      </section>
+
+      <section className="space-y-4">
+        <AnimatePresence>
+          {posts.map(post => (
+            <motion.article
+              key={post.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="p-4 bg-gradient-to-r from-white/3 to-white/2 rounded-lg"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center font-bold">{post.user[0]}</div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">{post.user}</div>
+                    <div className="text-sm text-white/60">just now</div>
+                  </div>
+                  <p className="mt-2">{post.text}</p>
+
+                  <div className="mt-3 flex items-center gap-4 text-sm">
+                    <button onClick={() => toggleLike(post.id)} className="px-2 py-1 rounded-md hover:bg-white/5">👍 {post.likes}</button>
+                    <button className="px-2 py-1 rounded-md hover:bg-white/5">💬 {post.comments}</button>
+                    <button className="px-2 py-1 rounded-md hover:bg-white/5">🔁 Share</button>
+                  </div>
+                </div>
+              </div>
+            </motion.article>
+          ))}
+        </AnimatePresence>
+      </section>
+    </main>
+  )
+}
+
+function Profile() {
+  return (
+    <main className="max-w-4xl mx-auto p-4">
+      <div className="bg-white/5 p-6 rounded-lg flex gap-4 items-center">
+        <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center text-2xl font-bold">Y</div>
+        <div>
+          <h2 className="text-2xl font-semibold">Your Name</h2>
+          <p className="text-sm text-white/60">@you • Futuristic explorer</p>
+          <div className="mt-3 flex gap-3">
+            <div>Posts <div className="font-bold">42</div></div>
+            <div>Followers <div className="font-bold">1.2k</div></div>
+            <div>Following <div className="font-bold">180</div></div>
+          </div>
+        </div>
+      </div>
+
+      <section className="mt-6">
+        <h3 className="mb-3 font-semibold">Recent posts</h3>
+        <div className="space-y-3">
+          {initialPosts.map(p => (
+            <div key={p.id} className="p-3 bg-white/3 rounded">{p.text}</div>
+          ))}
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function Login() {
+  const navigate = useNavigate()
+  function submit(e) {
+    e.preventDefault()
+    // fake login — in real app handle auth
+    navigate('/')
+  }
+  return (
+    <main className="min-h-[60vh] flex items-center justify-center">
+      <form onSubmit={submit} className="w-full max-w-sm bg-white/5 p-6 rounded-lg">
+        <h2 className="text-xl mb-4 font-semibold">Login</h2>
+        <input className="w-full p-2 mb-3 bg-transparent border rounded" placeholder="Email" />
+        <input type="password" className="w-full p-2 mb-3 bg-transparent border rounded" placeholder="Password" />
+        <button className="w-full py-2 rounded bg-gradient-to-r from-cyan-400 to-purple-500 font-semibold">Sign in</button>
+      </form>
+    </main>
+  )
+}
+
+function Messages() {
+  const [messages, setMessages] = useState([
+    { id: 1, from: 'Ava', text: 'Hey! Want to collab?' },
+    { id: 2, from: 'Kai', text: 'Check my new design.' },
+  ])
+  const [val, setVal] = useState('')
+
+  function send() {
+    if (!val.trim()) return
+    setMessages([...messages, { id: Date.now(), from: 'You', text: val }])
+    setVal('')
+  }
+
+  return (
+    <main className="max-w-4xl mx-auto p-4">
+      <div className="bg-white/5 p-4 rounded h-[60vh] flex flex-col">
+        <div className="flex-1 overflow-auto space-y-2 mb-3">
+          {messages.map(m => (
+            <div key={m.id} className={`p-2 rounded ${m.from === 'You' ? 'bg-white/10 self-end' : 'bg-white/3 self-start'}`}>
+              <div className="text-sm font-semibold">{m.from}</div>
+              <div>{m.text}</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input value={val} onChange={e => setVal(e.target.value)} className="flex-1 p-2 bg-transparent border rounded" placeholder="Type a message" />
+          <button onClick={send} className="px-4 rounded bg-cyan-400 text-black font-semibold">Send</button>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+function Notifications() {
+  const [items] = useState([
+    'Ava liked your post',
+    'Kai started following you',
+    'New comment on your post',
+  ])
+  return (
+    <main className="max-w-4xl mx-auto p-4">
+      <div className="bg-white/5 p-4 rounded">
+        <h3 className="font-semibold mb-2">Notifications</h3>
+        <ul className="space-y-2">
+          {items.map((it, i) => <li key={i} className="p-2 rounded bg-white/3">{it}</li>)}
+        </ul>
+      </div>
+    </main>
+  )
+}
+
+function Settings() {
+  return (
+    <main className="max-w-4xl mx-auto p-4">
+      <div className="bg-white/5 p-4 rounded">
+        <h3 className="font-semibold mb-3">Settings</h3>
+        <div className="space-y-3">
+          <div className="p-3 bg-white/3 rounded">Profile settings (name, bio)</div>
+          <div className="p-3 bg-white/3 rounded">Theme preference</div>
+          <div className="p-3 bg-white/3 rounded">Privacy</div>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// ---------- App
+export default function App() {
+  const [theme, setTheme] = useLocalTheme()
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-gradient-to-b from-black to-slate-900 dark:from-slate-900 dark:to-black text-white">
+        <Navbar theme={theme} setTheme={setTheme} />
+
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </AnimatePresence>
+
+        <footer className="text-center p-4 text-sm text-white/60">Made with ❤️ — Futurisocial UI</footer>
+      </div>
+    </Router>
+  )
+}
